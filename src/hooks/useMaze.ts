@@ -52,11 +52,15 @@ export const useMaze = () => {
     }
 
     setMaze(newMaze)
-    setPath(
-      Array(mazeSize)
-        .fill(null)
-        .map(() => Array(mazeSize).fill(false)),
-    )
+    const initialPath = Array(mazeSize)
+      .fill(null)
+      .map(() => Array(mazeSize).fill(false))
+
+    // Set start and end points to true
+    initialPath[0][0] = true
+    initialPath[mazeSize - 1][mazeSize - 1] = true
+
+    setPath(initialPath)
     setSolved(false)
   }, [complexity, getMazeSize, checkMazeSolvable])
 
@@ -64,21 +68,10 @@ export const useMaze = () => {
     initializeMaze()
   }, [complexity, initializeMaze])
 
-  const handleCellClick = useCallback(
-    (row: number, col: number) => {
-      if (maze[row][col] === 1 || solved) return // Don't allow clicking on walls or after solving
-
-      setPath((prevPath) => {
-        const newPath = prevPath.map((row) => [...row])
-        newPath[row][col] = !newPath[row][col] // Toggle the cell
-        return newPath
-      })
-    },
-    [maze, solved],
-  )
-
   const checkSolution = useCallback(() => {
     const mazeSize = maze.length
+    if (mazeSize === 0) return
+
     const visited: boolean[][] = Array(mazeSize)
       .fill(null)
       .map(() => Array(mazeSize).fill(false))
@@ -102,12 +95,29 @@ export const useMaze = () => {
       return dfs(x + 1, y) || dfs(x - 1, y) || dfs(x, y + 1) || dfs(x, y - 1)
     }
 
-    setSolved(dfs(0, 0))
+    const isConnected = dfs(0, 0)
+    const reachesEnd = path[mazeSize - 1][mazeSize - 1]
+    setSolved(isConnected && reachesEnd)
   }, [maze, path])
 
   useEffect(() => {
     checkSolution()
-  }, [path, checkSolution])
+  }, [checkSolution])
+
+  const handleCellClick = useCallback(
+    (row: number, col: number) => {
+      if (maze[row][col] === 1) return // Don't allow clicking on walls
+
+      setPath((prevPath) => {
+        const newPath = prevPath.map((row) => [...row])
+        newPath[row][col] = !newPath[row][col] // Toggle the cell
+        return newPath
+      })
+
+      checkSolution()
+    },
+    [maze, checkSolution],
+  )
 
   const solveMaze = useCallback(() => {
     const mazeSize = maze.length
