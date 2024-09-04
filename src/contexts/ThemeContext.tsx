@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 
-type Theme = 'light' | 'dark' | 'auto'
+export const themes = ['light', 'dark', 'auto'] as const
+
+export type Theme = (typeof themes)[number]
 
 interface ThemeContextType {
   theme: Theme
